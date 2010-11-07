@@ -59,7 +59,8 @@
 ;; Racket API
 
 (struct tag
-  (title artist album comment genre year track)
+  (title artist album comment genre year track
+   length bitrate samplerate channels)
   #:transparent)
 
 ;; path-string? -> #f or tag
@@ -73,6 +74,7 @@
    (lambda ()
      (and file
           (let* ([ctag (taglib_file_tag file)]
+                 [ap (taglib_file_audioproperties file)]
                  [tag-for-file
                   (tag
                    (taglib_tag_title ctag)
@@ -81,7 +83,11 @@
                    (taglib_tag_comment ctag)
                    (taglib_tag_genre ctag)
                    (taglib_tag_year ctag)
-                   (taglib_tag_track ctag))])
+                   (taglib_tag_track ctag)
+                   (taglib_audioproperties_length ap)
+                   (taglib_audioproperties_bitrate ap)
+                   (taglib_audioproperties_samplerate ap)
+                   (taglib_audioproperties_channels ap))])
             (begin
              (taglib_tag_free_strings ctag)
              tag-for-file))))
