@@ -75,6 +75,8 @@
            (send play-button set-label play-icon))
          
          (define/public (on-song-ended)
+	   (send now-playing set-label "")
+	   (set-status-text "")
 	   (send playlist remove-song))
 
          (define/public (set-metadata metadata)
