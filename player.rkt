@@ -2,6 +2,7 @@
 
 ;; example
 (require framework
+         mrlib/hierlist
          racket/gui
 	 (prefix-in taglib- "taglib/taglib.rkt")
 	 "gst/gst.rkt")
@@ -199,61 +200,61 @@
 
 
 (define playlist%
-  (class list-box%
+  (class hierarchical-list%
     (init-field player parent)
-    (inherit append delete get-data set-string
-             get-number set-data get-string clear
-	     set-selection get-selection)
+    (inherit new-item delete-item select-prev get-items
+      select-next set-no-sublists get-selected)
 
-    (define (click-callback pl evt)
-      ;; this event type never seems to trigger
-      (when (eq? (send evt get-event-type) 'list-box-dclick)
-	(set! index (get-selection))
-	(play-current)))
+    (super-new [parent parent])
 
-    (super-new [label #f]
-               [choices '()]
-	       [parent parent]
-	       [callback click-callback])
+    (set-no-sublists #t)
 
-    (define current-song #f)
-    ;; the current position in the playlist
-    (define index 0)
+    (define current-item #f)
+    
+    (define/override (on-double-select i)
+      (set! current-item (get-selected))
+      (play-current))
 
-    ;; -> song% or #f
-    (define/public (get-current-song)
-      current-song)
+    (define (clear)
+      (for ([i (get-items)])
+        (delete-item i)))
+
+    (define (append song)
+      (let* ([tag (get-field metadata song)]
+             [title (taglib-tag-title tag)])
+	(define item (new-item))
+	(send (send item get-editor) insert title)
+	(send item user-data song)))
 
     ;; song% -> void?
     ;; called to play a new song, ignore the playlist
     (define/public (open-and-play song)
-      (let* ([tag (get-field metadata song)]
-             [title (taglib-tag-title tag)])
-        (clear)
-        (set! index 0)
-	(append title song)
-	(play-current)))
+      (clear)
+      (append song)
+      (set! current-item (first (get-items)))
+      (play-current))
 
     ;; song% -> void?
     ;; enqueue the next song (at the end)
     (define/public (enqueue song)
-      (let ([tag (get-field metadata song)])
-	(append (taglib-tag-title tag) song)))
-    
+      (append song))
+   
+    ;; move backward in the playlist
     (define/public (play-last)
-      (when (> index 0)
-	(set! index (sub1 index))
-	(play-current)))
+      (select-prev)
+      (set! current-item (get-selected))
+      (play-current))
 
+    ;; move forward in the playlist
     (define/public (play-next)
-      (when (< (+ index 1) (get-number))
-	(set! index (add1 index))
-	(play-current)))
+      (select-next)
+      (set! current-item (get-selected))
+      (play-current))
 
+    ;; play whatever is selected now
     (define/public (play-current)
-      (when (not (zero? (get-number)))
-	(let ([next-song (get-data index)])
-	  (set-selection index)
+      (when current-item
+        (let ([next-song (send current-item user-data)])
 	  (send player set-next-song next-song))))))
 
 (define ui (new player-frame%))
