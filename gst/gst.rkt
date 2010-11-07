@@ -20,6 +20,8 @@
 	      'qos 'any))
   (define state/c
     (one-of/c 'pending 'null 'ready 'paused 'playing))
+  (define seek-flag/c
+    (one-of/c 'none 'flush 'accurate 'key-unit 'segment 'skip))
 
   (provide/contract
     [gstreamer-initialize (-> boolean?)]
@@ -34,6 +36,9 @@
       (class/c
         (init)
 	(get-bus (->m (is-a?/c bus%)))
+	(get-position (->m exact-nonnegative-integer?))
+	(get-duration (->m exact-nonnegative-integer?))
+	(seek-simple (->m seek-flag/c exact-nonnegative-integer? boolean?))
 	(get-state (->m (cons/c state/c state/c)))
 	(set-state (->m state/c void?))
 	(override

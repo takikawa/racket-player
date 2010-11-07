@@ -1,31 +1,55 @@
 #lang racket
 
 ;; types.rkt
-;; GStreamer types
+;; GStreamer types and constants
 
 (require ffi/unsafe)
 
 (provide _gboolean
          _gint
+	 _gint64
          _guint
          _guint64
          _gulong
          
          _GMainContext
          _GMainLoop
-         
+        
+	 _GstFormat
+	 GST_FORMAT_PERCENT_MAX
+	 GST_FORMAT_PERCENT_SCALE
+
+	 _GstSeekFlags
+
          _GstMessageType)
 
 (define << arithmetic-shift)
 
 (define _gint _int)
 (define _guint _uint)
+(define _gint64 _int64)
 (define _guint64 _uint64)
 (define _gulong _ulong)
 (define _gboolean _bool)
 
 (define _GMainContext (_cpointer/null 'GMainContext))
 (define _GMainLoop (_cpointer 'GMainLoop))
+
+(define GST_FORMAT_PERCENT_MAX 1000000)
+(define GST_FORMAT_PERCENT_SCALE 10000)
+
+(define _GstFormat
+  (_enum '(undefined default bytes time
+           buffers percent)))
+
+(define _GstSeekFlags
+  (_enum
+    `(none      = 0
+      flush     = ,(1 . << . 0)
+      accurate  = ,(1 . << . 1)
+      key-unit  = ,(1 . << . 2)
+      segment   = ,(1 . << . 3)
+      flag-skip = ,(1 . << . 4))))
 
 (define _GstMessageType
   (_enum
