@@ -11,8 +11,12 @@
          define-glib
          define-gobject
          gstreamer-lib
-         
+
          define-signal-handler
+	 gst->rkt
+
+	 path->uri
+	 uri->path
          
          gobject-set-string)
 
@@ -39,10 +43,15 @@
 (define-definer define-gobject gobject-lib)
 (define-definer define-glib glib-lib)
 
+(define-gst gst_object_ref (_fun _pointer -> _pointer))
+(define-gst gst_object_unref (_fun _pointer -> _void))
+
 (define-gobject g_signal_connect_data 
-  (_fun _pointer _string _pointer _pointer _pointer _int -> _gulong))
+  (_fun _fpointer _string _fpointer _pointer _fpointer _int -> _gulong))
 (define (g_signal_connect instance signal-name callback data)
   (g_signal_connect_data instance signal-name callback data #f 0))
+(define-gobject g_object_get_data
+  (_fun _pointer _string -> _pointer))
 
 ;; Utility functions
 ;; gobject-set-string : GObject String String -> void
@@ -53,6 +62,16 @@
                  gobject-lib 
                  (_fun _pointer _string _string _pointer -> _void)))
   (c-setter gobj str val #f))
+
+;; URI functions
+(define-glib g_filename_from_uri 
+	     (_fun _string _pointer _pointer ->  _path))
+(define-glib g_filename_to_uri
+	     (_fun _path _string _pointer ->  _string))
+(define (path->uri path)
+  (g_filename_to_uri path #f #f))
+(define (uri->path uri)
+  (g_filename_from_uri uri #f #f))
 
 ;; signal-handler macro taken from MrEd
 (define-syntax-rule (define-signal-handler 
@@ -66,3 +85,10 @@
       (function-ptr handler-proc (_fun #:atomic? #t . args)))
     (define (connect-name instance [user-data #f])
       (g_signal_connect instance signal-name handler_function user-data))))
+
+;; taken from MrEd as well
+(define (gst->rkt gst)
+  (let ([ptr (g_object_get_data gst "rkt")])
+    (and ptr
+         (let ([wb (ptr-ref ptr _scheme)])
+           (and wb (weak-box-value wb))))))
