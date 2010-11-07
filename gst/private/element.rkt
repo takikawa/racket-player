@@ -1,14 +1,14 @@
-#lang racket
+#lang racket/base
 
-;; gst-element
+;; element.rkt
 
 (require ffi/unsafe
          racket/class
-         "gst-bus.rkt"
+         "bus.rkt"
          "utils.rkt")
 
 (provide _GstElement
-         gst-element%)
+         element%)
  
 (define _GstElement (_cpointer 'GstElement))
 
@@ -23,7 +23,7 @@
 (define-gst gst_element_get_state
   (_fun _GstElement _pointer _pointer _uint64 -> _void))
 
-(define gst-element%
+(define element%
   (class object%
     (super-new)
     (init instance)
@@ -34,7 +34,7 @@
       gst-instance)
     
     (define/public (get-bus)
-      (make-object gst-bus%
+      (make-object bus%
         (gst_element_get_bus gst-instance)))
     
     (define/public (get-state)

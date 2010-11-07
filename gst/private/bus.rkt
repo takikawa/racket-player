@@ -1,17 +1,16 @@
 #lang racket
 
-;; gst-bus.rkt
+;; bus.rkt
 
 (require ffi/unsafe
-         "gst-message.rkt"
+         "message.rkt"
          "utils.rkt"
          "types.rkt")
 
 (provide _GstBus
          _GstBusFunc
          
-         make-gst-bus%
-         gst-bus%)
+         bus%)
 
 (define _GstBus (_cpointer 'GstBus))
 (define _GstBusFunc 
@@ -27,16 +26,16 @@
   (lambda (bus msg data)
     (void)))
 
-(define (make-gst-bus%)
-  (make-object gst-bus% (gst_bus_new)))
-
-(define gst-bus%
+(define bus%
   (class object%
+	 (init gst-bus)
          (super-new)
-         (init-field _gst_bus)
 
-	 ;(connect-message _gst_bus)
-	 ;(gst_bus_add_signal_watch _gst_bus)
+         (define instance 
+	   (or gst-bus (gst_bus_new)))
+
+	 ;(connect-message instance)
+	 ;(gst_bus_add_signal_watch instance)
 
 	 (define/public (on-message msg)
 	   (void))
@@ -45,4 +44,4 @@
            (let ([callback
                   (lambda (bus msg data)
                     (f (GstMessage-type msg)))])
-             (gst_bus_add_watch _gst_bus callback #f)))))
+             (gst_bus_add_watch instance callback #f)))))

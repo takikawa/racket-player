@@ -1,12 +1,12 @@
-#lang racket
+#lang racket/base
 
-;; gst-pipeline.rkt
+;; pipeline.rkt
 ;; 
 
 (require ffi/unsafe
          racket/class
-         "gst-bus.rkt"
-         "gst-element.rkt"
+         "bus.rkt"
+         "element.rkt"
          "utils.rkt"
          "types.rkt")
 
@@ -28,7 +28,7 @@
 ;;(define-gst gst_pipeline_get_delay (_fun _GstPipeline -> _GstClockTime))
 
 (define pipeline%
-  (class gst-element%
+  (class element%
     (inherit get-instance)
     (init [instance #f])
     
@@ -39,7 +39,7 @@
     (cpointer-push-tag! gst-instance 'GstPipeline)
     
     (define/override (get-bus)
-      (make-object gst-bus%
+      (make-object bus%
         (gst_pipeline_get_bus gst-instance)))
     
     (define/public (auto-clock)

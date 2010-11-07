@@ -1,6 +1,6 @@
 #lang racket
 
-;; gst-message.rkt
+;; message.rkt
 
 (require ffi/unsafe
          "types.rkt")

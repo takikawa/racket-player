@@ -10,7 +10,6 @@
 (provide define-gst
          define-glib
          define-gobject
-         gstreamer-lib
 
          define-signal-handler
 	 gst->rkt

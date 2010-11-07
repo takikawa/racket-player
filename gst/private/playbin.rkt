@@ -3,8 +3,8 @@
 ;; playbin.rkt
 
 (require ffi/unsafe
-         "gst-element-factory.rkt"
-         "gst-pipeline.rkt"
+         "element-factory.rkt"
+         "pipeline.rkt"
          "utils.rkt")
 
 (provide playbin%)

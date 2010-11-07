@@ -1,10 +1,9 @@
 #lang racket
 
-;; gst-element-factory.rkt
-;;
+;; element-factory.rkt
 
 (require ffi/unsafe
-         "gst-element.rkt"
+         "element.rkt"
          "utils.rkt")
 
 (provide gst_element_factory_make)
