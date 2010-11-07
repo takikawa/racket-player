@@ -69,10 +69,10 @@
 			    (send playlist enqueue (new song% [path path]))))))
 
          (define/public (on-paused)
-           (send play-button set-label pause-icon))
+           (send play-button set-label play-icon))
          
          (define/public (on-playing)
-           (send play-button set-label play-icon))
+           (send play-button set-label pause-icon))
          
          (define/public (on-song-ended)
 	   (send now-playing set-label "")
