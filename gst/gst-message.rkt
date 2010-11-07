@@ -6,26 +6,34 @@
          "types.rkt")
 
 (provide _GstMessage
-         GstMessage-type
-         GstMessage-timestamp
-         GstMessage-mini-object
-         GstMessage-src
-         GstMessage-structure)
-
-;; opaque and not meant to be used
-(define _GTypeInstance (_list-struct _pointer))
+         _GstMessage-pointer
+	 
+	 GstMessage?
+	 GstMessage-type
+	 GstMessage-timestamp)
 
 (define _GstObject (_cpointer 'GstObject))
 (define _GstStructure (_cpointer 'GstStructure))
 
 (define-cstruct _GstMiniObject
-  ([instance _GTypeInstance]
+  (;; opaque type instance
+   [instance _pointer]
+   ;; public
    [refcount _gint]
-   [flags _guint]))
+   [flags _guint]
+   ;; private
+   [gst_reserved _pointer]))
 
 (define-cstruct _GstMessage
-  ([mini-object _GstMiniObject]
+  (;; parent structure
+   [mini-object _GstMiniObject]
+   ;; private
+   [lock _pointer]
+   [gcond _pointer]
+   ;; public
    [type _GstMessageType]
    [timestamp _guint64]
    [src _GstObject]
-   [structure _GstStructure]))
+   [structure _GstStructure]
+   ;; private
+   [abidata _pointer]))

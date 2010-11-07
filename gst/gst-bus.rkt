@@ -15,21 +15,34 @@
 
 (define _GstBus (_cpointer 'GstBus))
 (define _GstBusFunc 
-  (_fun #:atomic? #t _GstBus _GstMessage _pointer -> _gboolean))
+  (_fun _GstBus _GstMessage-pointer _pointer -> _gboolean))
 
 (define-gst gst_bus_add_watch 
   (_fun _GstBus _GstBusFunc _pointer -> _uint))
 (define-gst gst_bus_new (_fun -> _GstBus))
 (define-gst gst_bus_add_signal_watch (_fun _GstBus -> _void))
 
+(define-signal-handler connect-message "message"
+  (_fun _GstBus _GstMessage-pointer _pointer -> _void)
+  (lambda (bus msg data)
+    (void)))
+
 (define (make-gst-bus%)
   (make-object gst-bus% (gst_bus_new)))
 
 (define gst-bus%
   (class object%
-    (super-new)
-    (init-field _gst_bus)
-    
-    (define/public (add-watch f)
-      (gst_bus_add_watch _gst_bus f #f))))
-      ;(gst_bus_add_signal_watch _gst_bus))))
+         (super-new)
+         (init-field _gst_bus)
+
+	 ;(connect-message _gst_bus)
+	 ;(gst_bus_add_signal_watch _gst_bus)
+
+	 (define/public (on-message msg)
+	   (void))
+         
+         (define/public (add-watch f)
+           (let ([callback
+                  (lambda (bus msg data)
+                    (f (GstMessage-type msg)))])
+             (gst_bus_add_watch _gst_bus callback #f)))))

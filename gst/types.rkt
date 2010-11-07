@@ -55,4 +55,5 @@
      request-state    = ,(1 . << . 22)
      step-start       = ,(1 . << . 23)
      qos              = ,(1 . << . 24)
-     any              = ,(bitwise-not 0))))
+     any              = ,(bitwise-not 0))
+     _gint))
