@@ -3,32 +3,36 @@
 ;; playbin.rkt
 
 (require ffi/unsafe
-         "gst-element.rkt"
          "gst-element-factory.rkt"
+         "gst-pipeline.rkt"
          "utils.rkt")
 
-(provide make-playbin%
-         playbin%)
+(provide playbin%)
 
-(define _GstPlaybin (_cpointer 'GstPlaybin))
-
-(define (make-playbin%)
-  (make-object playbin%
-    (gst_element_factory_make "playbin2" "play")))
+(define _GstPlaybin (_cpointer 'GstPlaybin _GstPipeline))
+    
+(define-signal-handler connect-about-to-finish "about-to-finish"
+  (_fun _GstPlaybin _pointer -> _void)
+  (lambda (instance data)
+    (displayln "about to finish")))
 
 (define playbin%
-  (class gst-element%
-    (init _instance)
-    (inherit-field _gst-element)
+  (class pipeline%
+    (inherit get-instance)
+
+    (super-new 
+      [instance (gst_element_factory_make "playbin2" "play")])
     
-    (super-new (_gst-element _instance))
-    
-    (define/public (connect-signal signal handler)
-      (define-signal-handler connect-signal (symbol->string signal)
-        (_fun _GstPlaybin _pointer -> _void)
-        (lambda (instance data)
-          (handler (make-object playbin% instance) data)))
-      (connect-signal _gst-element #f))
-    
-    (define/public (set-uri! uri)
-      (gobject-set-string _gst-element "uri" uri))))
+    (define gst-instance (get-instance))
+    (cpointer-push-tag! gst-instance 'GstPlaybin)
+
+    ;(connect-about-to-finish gst-instance)
+  
+    (define/public (set-uri uri)
+      (gobject-set-string gst-instance "uri" uri))
+   
+    ;; default impl.
+    (define/public (on-about-to-finish)
+      ;; debug
+      (displayln "About to finish!")
+      (void))))

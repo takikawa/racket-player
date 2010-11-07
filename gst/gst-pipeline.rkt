@@ -10,7 +10,11 @@
          "utils.rkt"
          "types.rkt")
 
-(define _GstPipeline (_cpointer '(GstElement GstPipeline)))
+(provide _GstPipeline
+
+	 pipeline%)
+
+(define _GstPipeline (_cpointer 'GstPipeline _GstElement))
 
 (define-gst gst_pipeline_new (_fun _string -> _GstElement))
 (define-gst gst_pipeline_get_bus (_fun _GstPipeline -> _GstBus))
@@ -23,22 +27,26 @@
 ;;(define-gst gst_pipeline_set_delay (_fun _GstPipeline _GstClockTime -> _void))
 ;;(define-gst gst_pipeline_get_delay (_fun _GstPipeline -> _GstClockTime))
 
-(define gst-pipeline
+(define pipeline%
   (class gst-element%
-    (init _gst_pipeline)
+    (inherit get-instance)
+    (init [instance #f])
     
-    (super-new (_gst-element _gst_pipeline))
-    (inherit-field _gst-element)
+    (super-new [instance (or instance
+			     (gst_pipeline_new "pipeline"))])
+
+    (define gst-instance (get-instance))
+    (cpointer-push-tag! gst-instance 'GstPipeline)
     
     (define/override (get-bus)
       (make-object gst-bus%
-        (gst_pipeline_get_bus _gst-element)))
+        (gst_pipeline_get_bus gst-instance)))
     
     (define/public (auto-clock)
-      (gst_pipeline_auto_clock _gst-element))
+      (gst_pipeline_auto_clock gst-instance))
     
     (define/public (set-auto-flush-bus flag)
-      (gst_pipeline_set_auto_flush_bus _gst-element flag))
+      (gst_pipeline_set_auto_flush_bus gst-instance flag))
     
     (define/public (get-auto-flush-bus)
-      (gst_pipeline_get_auto_flush_bus _gst-element))))
+      (gst_pipeline_get_auto_flush_bus gst-instance))))

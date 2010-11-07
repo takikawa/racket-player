@@ -21,19 +21,28 @@
 (define-gst gst_element_set_state 
   (_fun _pointer _GstState -> _GstStateChangeReturn))
 (define-gst gst_element_get_state
-  (_fun _GstElement -> _void))
+  (_fun _GstElement _pointer _pointer _uint64 -> _void))
 
 (define gst-element%
   (class object%
     (super-new)
-    (init-field _gst-element)
+    (init instance)
+
+    (define gst-instance instance)
+
+    (define/public (get-instance)
+      gst-instance)
     
     (define/public (get-bus)
       (make-object gst-bus%
-        (gst_element_get_bus _gst-element)))
+        (gst_element_get_bus gst-instance)))
     
     (define/public (get-state)
-      (gst_element_get_state _gst-element))
+      (define state (malloc _GstState))
+      (define pending (malloc _GstState))
+      (gst_element_get_state gst-instance state pending 0)
+      (cons (ptr-ref state _GstState)
+            (ptr-ref pending _GstState)))
     
-    (define/public (set-state! st)
-      (gst_element_set_state _gst-element st))))
+    (define/public (set-state st)
+      (gst_element_set_state gst-instance st))))
