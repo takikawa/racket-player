@@ -100,6 +100,10 @@
                           (when path
 			    (send playlist enqueue (new song% [path path]))))))
 
+	 (define/override (on-size w h)
+	   (send playlist update-width w)
+	   (super on-size w h))
+
          (define/public (on-paused)
            (send play-button set-label play-icon)
 	   (send play-timer stop))
@@ -201,9 +205,98 @@
 
 (define playlist%
   (class hierarchical-list%
+
+    ;; "constants" (we set! them on resizes) for
+    ;; displaying the list items
+    (define CARET-WIDTH 20)
+    (define ARTIST-WIDTH 200)
+    (define TITLE-WIDTH 200)
+    (define ALBUM-WIDTH 200)
+    (define SPACING 20)
+
+    ;; mixin for playlist items in hierlist
+    (define playlist-item-mixin
+      (lambda (item%)
+	(class item%
+	  (field [playing? #f])
+
+	  (define/public (set-playing? status)
+	    (set! playing? status))
+
+	  (define/public (get-playing?)
+	    playing?)
+
+	  (super-new))))
+
+    ;; snips for showing playlist items
+    ;; with copious help from reading SirMail source code
+    (define playlist-item-snip%
+      (class snip%
+	(inherit get-style)
+	(init-field artist title album item)
+
+	(define (playing?) (send item get-playing?))
+
+	(define selected-text-color (make-object color% "olive"))
+
+	(define/override (draw dc x y left top right bottom dx dy draw-caret)
+	  (define old-foreground (send dc get-text-foreground))
+	  (define old-mode (send dc get-text-mode))
+	  (define-values (_1 h _2 _3) (send dc get-text-extent "yX"))
+
+	  (when (playing?)
+	    (send dc set-text-foreground selected-text-color))
+
+	  (when (playing?)
+	    (send dc draw-text ">" x y #t))
+
+	  (send dc draw-text artist (+ x CARET-WIDTH) y #t)
+	  (send dc draw-text title (+ x CARET-WIDTH ARTIST-WIDTH SPACING) y)
+	  (send dc draw-text album (+ x CARET-WIDTH ARTIST-WIDTH TITLE-WIDTH (* 2 SPACING)) y)
+	
+	  (define old-pen (send dc get-pen))
+	  (send dc set-pen (send the-pen-list find-or-create-pen "green" 0 'solid))
+	  (send dc draw-line (+ x CARET-WIDTH ARTIST-WIDTH (/ SPACING 2))
+	                     y
+			     (+ x CARET-WIDTH ARTIST-WIDTH (/ SPACING 2))
+			     (+ y h))
+	  (send dc draw-line (+ x CARET-WIDTH ARTIST-WIDTH TITLE-WIDTH SPACING (/ SPACING 2))
+	                     y
+			     (+ x CARET-WIDTH ARTIST-WIDTH TITLE-WIDTH SPACING (/ SPACING 2))
+			     (+ y h))
+
+	  (send dc set-pen old-pen)
+	  (send dc set-text-foreground old-foreground)
+	  (send dc set-text-mode old-mode))
+
+	(define/override (get-extent dc x y wb hb db sb lb rb)
+	  (define (set-box/f! b v) (when (box? b) (set-box! b v)))
+	  (define-values (w h d s) (send dc get-text-extent "yX" (send (get-style) get-font)))
+	  (set-box/f! hb h)
+	  (set-box/f! wb (get-width))
+	  (set-box/f! db d)
+	  (set-box/f! sb s)
+	  (set-box/f! lb 2)
+	  (set-box/f! rb 0))
+
+        (inherit get-admin) 
+	(field [width 500])
+
+	(define/public (set-width w)
+	  (define admin (get-admin))
+	  (when admin
+	    (send admin resized this #t))
+	  (set! width w))
+
+	(define/public (get-width)
+	  width)
+
+	(super-new)))
+
+    ;; playlist% starts here
     (init-field player parent)
     (inherit new-item delete-item select-prev get-items
-      select-next set-no-sublists get-selected)
+      select-next set-no-sublists get-selected refresh)
 
     (super-new [parent parent])
 
@@ -212,18 +305,49 @@
     (define current-item #f)
     
     (define/override (on-double-select i)
-      (set! current-item (get-selected))
+      (update-selected i)
       (play-current))
+
+    (define/public (update-width w)
+      (define remaining (- w (* 2 SPACING) CARET-WIDTH))
+      (set! ARTIST-WIDTH (floor (* 1/4 remaining)))
+      (set! TITLE-WIDTH  (floor (* 1/2 remaining)))
+      (set! ALBUM-WIDTH  (floor (* 1/4 remaining)))
+      (for-each
+        (lambda (snip) 
+	  (send snip set-width w))
+        (map (lambda (i) 
+               (send (send i get-editor) 
+	             find-snip 0 'after))
+	     (get-items))))
 
     (define (clear)
       (for ([i (get-items)])
         (delete-item i)))
 
+    (define (update-selected new-sel)
+      (when current-item 
+	(send current-item set-playing? #f))
+      (set! current-item new-sel)
+      (send new-sel set-playing? #t))
+
+    ;; song% -> void?
+    ;; put a new song into the playlist
     (define (append song)
+      (define (format-item item tag)
+        (define editor (send item get-editor))
+        (define snip
+          (new playlist-item-snip%
+               [artist (taglib-tag-artist tag)]
+               [title  (taglib-tag-title tag)]
+               [album  (taglib-tag-album tag)]
+               [item   item]))
+        (send editor insert snip))
+
       (let* ([tag (get-field metadata song)]
              [title (taglib-tag-title tag)])
-	(define item (new-item))
-	(send (send item get-editor) insert title)
+	(define item (new-item playlist-item-mixin))
+	(format-item item tag)
 	(send item user-data song)))
 
     ;; song% -> void?
@@ -231,7 +355,7 @@
     (define/public (open-and-play song)
       (clear)
       (append song)
-      (set! current-item (first (get-items)))
+      (update-selected (first (get-items)))
       (play-current))
 
     ;; song% -> void?
@@ -242,17 +366,18 @@
     ;; move backward in the playlist
     (define/public (play-last)
       (select-prev)
-      (set! current-item (get-selected))
+      (update-selected (get-selected))
       (play-current))
 
     ;; move forward in the playlist
     (define/public (play-next)
       (select-next)
-      (set! current-item (get-selected))
+      (update-selected (get-selected))
       (play-current))
 
     ;; play whatever is selected now
     (define/public (play-current)
+      (refresh)
       (when current-item
         (let ([next-song (send current-item user-data)])
 	  (send player set-next-song next-song))))))
