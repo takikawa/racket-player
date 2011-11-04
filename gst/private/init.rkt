@@ -9,7 +9,7 @@
 (provide g_main_loop_new
          g_main_loop_run
          g_main_loop_quit
-  
+
 	 gstreamer-initialize
          gst_init
          gst_init_check)

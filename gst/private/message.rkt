@@ -7,7 +7,7 @@
 
 (provide _GstMessage
          _GstMessage-pointer
-	 
+
 	 GstMessage?
 	 GstMessage-type
 	 GstMessage-timestamp)

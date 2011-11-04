@@ -1,7 +1,6 @@
 #lang racket/base
 
 ;; pipeline.rkt
-;; 
 
 (require ffi/unsafe
          racket/class
@@ -31,22 +30,22 @@
   (class element%
     (inherit get-instance)
     (init [instance #f])
-    
+
     (super-new [instance (or instance
 			     (gst_pipeline_new "pipeline"))])
 
     (define gst-instance (get-instance))
     (cpointer-push-tag! gst-instance 'GstPipeline)
-    
+
     (define/override (get-bus)
       (make-object bus%
         (gst_pipeline_get_bus gst-instance)))
-    
+
     (define/public (auto-clock)
       (gst_pipeline_auto_clock gst-instance))
-    
+
     (define/public (set-auto-flush-bus flag)
       (gst_pipeline_set_auto_flush_bus gst-instance flag))
-    
+
     (define/public (get-auto-flush-bus)
       (gst_pipeline_get_auto_flush_bus gst-instance))))

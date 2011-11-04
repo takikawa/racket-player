@@ -16,7 +16,7 @@
 
 	 path->uri
 	 uri->path
-         
+
          gobject-set-string)
 
 ;; FFI libraries for GStreamer
@@ -45,7 +45,7 @@
 (define-gst gst_object_ref (_fun _pointer -> _pointer))
 (define-gst gst_object_unref (_fun _pointer -> _void))
 
-(define-gobject g_signal_connect_data 
+(define-gobject g_signal_connect_data
   (_fun _fpointer _string _fpointer _pointer _fpointer _int -> _gulong))
 (define (g_signal_connect instance signal-name callback data)
   (g_signal_connect_data instance signal-name callback data #f 0))
@@ -58,12 +58,12 @@
 (define (gobject-set-string gobj str val)
   (define c-setter
     (get-ffi-obj "g_object_set"
-                 gobject-lib 
+                 gobject-lib
                  (_fun _pointer _string _string _pointer -> _void)))
   (c-setter gobj str val #f))
 
 ;; URI functions
-(define-glib g_filename_from_uri 
+(define-glib g_filename_from_uri
 	     (_fun _string _pointer _pointer ->  _path))
 (define-glib g_filename_to_uri
 	     (_fun _path _string _pointer ->  _string))
@@ -73,7 +73,7 @@
   (g_filename_from_uri uri #f #f))
 
 ;; signal-handler macro taken from MrEd
-(define-syntax-rule (define-signal-handler 
+(define-syntax-rule (define-signal-handler
                       connect-name
                       signal-name
                       (_fun . args)
