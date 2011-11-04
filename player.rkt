@@ -4,7 +4,7 @@
 (require framework
          mrlib/hierlist
          racket/gui
-	 (prefix-in taglib- "taglib/taglib.rkt")
+	 (prefix-in taglib- taglib)
 	 "gst/gst.rkt")
 
 (unless (gstreamer-initialize)
@@ -121,14 +121,14 @@
 	   (send play-timer stop)
 	   (send playlist play-next))
 
-         (define/public (set-metadata metadata)
-           (send now-playing set-label (taglib-tag-title metadata))
+         (define/public (set-metadata tag audio-props)
+           (send now-playing set-label (taglib-tag-title tag))
            (set-status-text
             (format "Length: ~a Bitrate: ~a Samplerate: ~a Channels: ~a"
-	      (taglib-tag-length metadata)
-	      (taglib-tag-bitrate metadata)
-	      (taglib-tag-samplerate metadata)
-	      (taglib-tag-channels metadata))))))
+	      (taglib-audio-properties-length audio-props)
+	      (taglib-audio-properties-bitrate audio-props)
+	      (taglib-audio-properties-samplerate audio-props)
+	      (taglib-audio-properties-channels audio-props))))))
 
 (define player%
   (class object%
@@ -192,13 +192,17 @@
          (define/public (set-next-song song)
            (stop)
 	   (send pb set-uri (path->uri (get-field path song)))
-           (send ui set-metadata (get-field metadata song))
+           (send ui set-metadata
+                 (get-field tag song)
+                 (get-field audio-props song))
            (play))))
 
 (define song%
   (class object%
     (init-field path)
-    (field [metadata (taglib-get-tags path)])
+    (define metadata (taglib-get-tags path))
+    (field [tag (first metadata)]
+           [audio-props (second metadata)])
 
     (super-new)))
 
@@ -344,7 +348,7 @@
                [item   item]))
         (send editor insert snip))
 
-      (let* ([tag (get-field metadata song)]
+      (let* ([tag (get-field tag song)]
              [title (taglib-tag-title tag)])
 	(define item (new-item playlist-item-mixin))
 	(format-item item tag)
