@@ -4,6 +4,7 @@
 
 (require racket/class
          (except-in racket/gui tag)
+         racket/runtime-path
          framework
          taglib
          "gst/gst.rkt")
@@ -11,12 +12,20 @@
 (unless (gstreamer-initialize)
   (error "Could not initialize GStreamer"))
 
+;; GUI constants
 (define icon-color (make-object color% "white"))
-(define play-icon  (make-object bitmap% "icons/media-playback-start.png" 'png icon-color))
-(define pause-icon (make-object bitmap% "icons/media-playback-pause.png" 'png icon-color))
-(define stop-icon  (make-object bitmap% "icons/media-playback-stop.png" 'png icon-color))
-(define fwd-icon   (make-object bitmap% "icons/media-skip-forward.png" 'png icon-color))
-(define bwd-icon   (make-object bitmap% "icons/media-skip-backward.png" 'png icon-color))
+
+(define-runtime-path play-icon-path "icons/media-playback-start.png")
+(define-runtime-path pause-icon-path "icons/media-playback-pause.png")
+(define-runtime-path stop-icon-path "icons/media-playback-stop.png")
+(define-runtime-path fwd-icon-path "icons/media-skip-forward.png")
+(define-runtime-path bwd-icon-path "icons/media-skip-backward.png")
+
+(define play-icon  (make-object bitmap% play-icon-path 'png icon-color))
+(define pause-icon (make-object bitmap% pause-icon-path 'png icon-color))
+(define stop-icon  (make-object bitmap% stop-icon-path 'png icon-color))
+(define fwd-icon   (make-object bitmap% fwd-icon-path 'png icon-color))
+(define bwd-icon   (make-object bitmap% bwd-icon-path 'png icon-color))
 
 (define player-frame%
   (class frame%
