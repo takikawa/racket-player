@@ -26,8 +26,7 @@
 
     (create-status-line)
 
-    (define player (new player% [playbin (new playbin%)]
-                                [frame this]))
+    (define player (new player% [playbin (new playbin%)] [frame this]))
 
     (define control-panel (new horizontal-panel%
                                [parent this]
@@ -58,79 +57,81 @@
                              [parent control-panel]
                              [stretchable-width #t]))
 
-     (define progress
-       (new slider%
-            [label #f]
-            [min-value 0]
-            [max-value 1000]
-            [init-value 0]
-            [style '(plain horizontal)]
-            [parent control-panel]
-            [callback
-            (lambda (sl e)
-              (send player set-progress
-                (/ (send sl get-value) 1000)))]))
+    (define progress
+      (new slider%
+           [label #f]
+           [min-value 0]
+           [max-value 1000]
+           [init-value 0]
+           [style '(plain horizontal)]
+           [parent control-panel]
+           [callback
+            (λ (sl e)
+               (send player set-progress
+                     (/ (send sl get-value) 1000)))]))
 
-     (define play-timer
-       (new timer% [notify-callback
-                    (lambda ()
-                      (send progress set-value
-                            (floor (* 1000 (send player get-progress)))))]))
+    (define play-timer
+      (new timer%
+           [notify-callback
+            (λ ()
+               (send progress set-value
+                     (floor (* 1000 (send player get-progress)))))]))
 
-     (send now-playing auto-resize #t)
+    (send now-playing auto-resize #t)
 
-     (define playlist (new playlist% [player player] [parent this]))
+    (define playlist (new playlist% [player player] [parent this]))
 
-     (define menu-bar (make-object menu-bar% this))
-     (define fmenu (make-object menu% "&File" menu-bar))
-     (define open-item
-       (make-object menu-item%
-         "&Open file"
-         fmenu
-         (lambda (mi evt)
-           (define path (finder:get-file))
-           (when path
-             (send playlist open-and-play
-                   (new song% [path path]))))))
+    (define menu-bar (make-object menu-bar% this))
+    (define fmenu (make-object menu% "&File" menu-bar))
+    (define open-item
+      (make-object
+       menu-item%
+       "&Open file"
+       fmenu
+       (lambda (mi evt)
+         (define path (finder:get-file))
+         (when path
+           (send playlist open-and-play
+                 (new song% [path path]))))))
 
-     (define enqueue-item
-       (make-object menu-item%
-                    "&Enqueue file"
-                    fmenu
-                    (lambda (mi evt)
-                      (define path (finder:get-file))
-                      (when path
-            	    (send playlist enqueue (new song% [path path]))))))
+    (define enqueue-item
+      (make-object
+       menu-item%
+       "&Enqueue file"
+       fmenu
+       (lambda (mi evt)
+         (define path (finder:get-file))
+         (when path
+           (send playlist enqueue (new song% [path path]))))))
 
-     (define/override (on-size w h)
-       ;(send playlist update-width w)
-       (super on-size w h))
+    (define/override (on-size w h)
+      (super on-size w h))
 
-     (define/public (on-paused)
-       (send play-button set-label play-icon)
-       (send play-timer stop))
+    (define/public (on-paused)
+      (send play-button set-label play-icon)
+      (send play-timer stop))
 
-     (define/public (on-playing)
-       (send play-button set-label pause-icon)
-       (send play-timer start 500))
+    (define/public (on-playing)
+      (send play-button set-label pause-icon)
+      (send play-timer start 500))
 
-     (define/public (on-stopped)
-       (send play-button set-label play-icon)
-       (send play-timer stop))
+    (define/public (on-stopped)
+      (send play-button set-label play-icon)
+      (send play-timer stop))
 
-     (define/public (on-song-ended)
-       (send play-button set-label play-icon)
-       (send play-timer stop)
-       (send playlist play-next))
+    (define/public (on-song-ended)
+      (send play-button set-label play-icon)
+      (send play-timer stop)
+      (send playlist play-next))
 
-     (define/public (set-metadata tag audio-props)
-       (send now-playing set-label (tag-title tag))
-       (set-status-text
-        (format "Length: ~a Bitrate: ~a Samplerate: ~a Channels: ~a"
-          (audio-properties-length audio-props)
-          (audio-properties-bitrate audio-props)
-          (audio-properties-samplerate audio-props)
-          (audio-properties-channels audio-props))))))
+    (define/public (set-metadata tag audio-props)
+      (send now-playing set-label (tag-title tag))
+      (set-status-text
+       (format "Length: ~a Bitrate: ~a Samplerate: ~a Channels: ~a"
+               (audio-properties-length audio-props)
+               (audio-properties-bitrate audio-props)
+               (audio-properties-samplerate audio-props)
+               (audio-properties-channels audio-props))))))
 
 (define player%
   (class object%
