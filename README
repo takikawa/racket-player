@@ -4,20 +4,10 @@ At the moment, it doesn't do much other than play whatever music
 and video files are supported by GStreamer. The GUI is very primitive
 so far.
 
-The main intention of this project is to demonstrate that this can be
-done and also for practicing my Racket-fu. Eventually, I intend to
-develop this into a useful media player alternative.
-
 ===============================================================================
-
-I recommend that you use the gr2 branch of Racket to run this. The gr2 branch
-seems to interact with the gstreamer bindings better.
 
 To run:
 racket player.rkt
-
-or
-gracket player.rkt (if not using gr2)
 
 ===============================================================================
 
@@ -25,3 +15,10 @@ Required libraries:
 libtagc
 libgstreamer-0.10
 and their dependencies
+
+===============================================================================
+
+Credits/Copyright:
+Icons are from the Tango Project and licensed under Creative Commons 3.0 BY-SA.
+
+The code is licensed under the GPLv3.
