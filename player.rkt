@@ -185,7 +185,7 @@
          (send pb get-duration)))
 
     (define/public (set-progress pct)
-      (send pb seek-simple 'flush (* pct (send pb get-duration))))
+      (send pb seek-simple 'flush (floor (* pct (send pb get-duration)))))
 
     (define/public (toggle-pause-play)
       (let ([st (current-state)])
