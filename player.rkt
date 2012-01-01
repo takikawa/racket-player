@@ -54,7 +54,8 @@
     (define stop-button
       (make-object button% stop-icon control-panel
                    (lambda (b e)
-                     (send player stop))))
+                     (send player stop)
+                     (on-stopped))))
 
     (define forward-button
       (make-object button% fwd-icon control-panel
