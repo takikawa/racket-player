@@ -227,7 +227,8 @@
     (init-field path)
     (define metadata (get-tags path))
     (field [tag (first metadata)]
-           [audio-props (second metadata)])
+           [audio-props (second metadata)]
+           [title (tag-title tag)])
 
     (super-new)))
 
@@ -239,26 +240,19 @@
     (super-new [label ""] [choices '()]
                [style (list 'single 'column-headers)]
                [columns '("Title" "Artist" "Album" "Track")]
-               ;; undo user choice if it's a single click, but
-               ;; play the selection if it's a double click
                [callback (λ (this ce)
                            (match (send ce get-event-type)
-                             ['list-box
-                              (unless (null? current)
-                                (select (first current)))]
-                             ['list-box-dclick
-                              ;; TODO: should change selection
-                              (play-current)]))])
+                             ['list-box-dclick (play-current)]
+                             [_ (void)]))])
 
     ;; additional initialization
     (init-field player)
 
     (inherit append clear get-data get-number
-             get-selections select set-string)
+             get-selections select get-string set-string)
 
-    ;; keep track of the selection separately so that
-    ;; user selections can be undone
-    (define current '())
+    ;; used to indicate currently playing song
+    (define current-label "▶")
 
     ;; number of columns
     (define column-num 4)
@@ -280,7 +274,6 @@
       (clear)
       (append-song song)
       (select 0)
-      (set! current '(0))
       (play-current))
 
     ;; song% -> void?
@@ -295,7 +288,6 @@
         (define selection (first (get-selections)))
         (unless (<= selection 0)
           (select (sub1 selection))
-          (set! current (list (sub1 selection)))
           (play-current))))
 
     ;; move forward in the playlist
@@ -305,14 +297,15 @@
         (define selection (first selections))
         (unless (>= selection (sub1 (get-number)))
           (select (add1 selection))
-          (set! current (list (add1 selection)))
           (play-current))))
 
     ;; play whatever is selected now
     (define/public (play-current)
       (define selections (get-selections))
       (unless (null? selections)
-        (define song (get-data (first selections)))
+        (define selection (first selections))
+        (update-playing selection)
+        (define song (get-data selection))
         (send player set-next-song song)))
 
     ;; pause or play the current song
@@ -320,6 +313,18 @@
       (define selections (get-selections))
       (unless (null? selections)
         (send player toggle-pause-play)))
+
+    ;; add or remove selection label
+    (define old-playing #f)
+    (define (update-playing n)
+      (when old-playing
+        (set-string old-playing
+                    (substring (get-field title (get-data old-playing)) 2)
+                    0))
+      (set! old-playing n)
+      (set-string n (string-append current-label " "
+                                   (get-field title (get-data n)))
+                  0))
 
     (inherit get-width get-column-width set-column-width)
     ;; used to initialize the column widths
