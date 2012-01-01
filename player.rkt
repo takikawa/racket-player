@@ -127,9 +127,6 @@
            (for ([fpath media])
              (send playlist enqueue (new song% [path fpath])))))))
 
-    (define/override (on-size w h)
-      (super on-size w h))
-
     (define/public (on-paused)
       (send play-button set-label play-icon)
       (send play-timer stop))
@@ -154,7 +151,11 @@
                (audio-properties-length audio-props)
                (audio-properties-bitrate audio-props)
                (audio-properties-samplerate audio-props)
-               (audio-properties-channels audio-props))))))
+               (audio-properties-channels audio-props))))
+
+    ;; augment and overrides
+    (define/augment (on-close)
+      (send player stop))))
 
 (define player%
   (class object%
