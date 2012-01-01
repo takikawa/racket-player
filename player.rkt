@@ -247,6 +247,9 @@
     ;; user selections can be undone
     (define current '())
 
+    ;; number of columns
+    (define column-num 4)
+
     ;; song% -> void?
     ;; put a new song into the playlist
     (define (append-song song)
@@ -292,7 +295,24 @@
     (define/public (play-current)
       (define selections (get-selections))
       (define song (get-data (first selections)))
-      (send player set-next-song song))))
+      (send player set-next-song song))
+
+    (inherit get-width get-column-width set-column-width)
+    ;; used to initialize the column widths
+    (define (resize-columns/uniform)
+      (define total-width (get-width))
+      (define each-width (quotient total-width column-num))
+      (for ([col column-num])
+        (define-values (width min-width max-width) (get-column-width col))
+        (set-column-width col each-width min-width max-width)))
+
+    ;; on the first size event, resize columns to reasonable widths
+    (define first-size? #t)
+    (define/override (on-size w h)
+      (when first-size?
+        (resize-columns/uniform)
+        (set! first-size? #f))
+      (super on-size w h))))
 
 (define ui (new player-frame%))
 
