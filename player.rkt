@@ -2,11 +2,12 @@
 
 ;; example music player
 
-(require racket/class
-         (except-in racket/gui tag)
+(require framework
+         racket/class
          racket/runtime-path
-         framework
          taglib
+         (except-in racket/gui tag)
+         "files.rkt"
          "gst/gst.rkt")
 
 (unless (gstreamer-initialize)
@@ -49,7 +50,7 @@
     (define play-button
       (make-object button% play-icon control-panel
                    (lambda (b e)
-                     (send player toggle-pause-play))))
+                     (send playlist play-toggle))))
 
     (define stop-button
       (make-object button% stop-icon control-panel
@@ -113,6 +114,18 @@
          (define path (finder:get-file))
          (when path
            (send playlist enqueue (new song% [path path]))))))
+
+    (define folder-item
+      (make-object
+       menu-item%
+       "Add folder"
+       fmenu
+       (lambda (mi evt)
+         (define path (get-directory))
+         (unless (false? path)
+           (define media (get-media-from-folder-path path))
+           (for ([fpath media])
+             (send playlist enqueue (new song% [path fpath])))))))
 
     (define/override (on-size w h)
       (super on-size w h))
@@ -189,8 +202,7 @@
 
     (define/public (toggle-pause-play)
       (let ([st (current-state)])
-        (cond [(or (stopped? st) (paused? st))
-               (play)]
+        (cond [(or (stopped? st) (paused? st)) (play)]
               [(playing? st) (pause)])))
 
     (define/public (play)
@@ -278,25 +290,36 @@
 
     ;; move backward in the playlist
     (define/public (play-last)
-      (define selection (first (get-selections)))
-      (unless (<= selection 0)
-        (select (sub1 selection))
-        (set! current (list (sub1 selection)))
-        (play-current)))
+      (define selections (get-selections))
+      (unless (null? selections)
+        (define selection (first (get-selections)))
+        (unless (<= selection 0)
+          (select (sub1 selection))
+          (set! current (list (sub1 selection)))
+          (play-current))))
 
     ;; move forward in the playlist
     (define/public (play-next)
-      (define selection (first (get-selections)))
-      (unless (>= selection (sub1 (get-number)))
-        (select (add1 selection))
-        (set! current (list (add1 selection)))
-        (play-current)))
+      (define selections (get-selections))
+      (unless (null? selections)
+        (define selection (first selections))
+        (unless (>= selection (sub1 (get-number)))
+          (select (add1 selection))
+          (set! current (list (add1 selection)))
+          (play-current))))
 
     ;; play whatever is selected now
     (define/public (play-current)
       (define selections (get-selections))
-      (define song (get-data (first selections)))
-      (send player set-next-song song))
+      (unless (null? selections)
+        (define song (get-data (first selections)))
+        (send player set-next-song song)))
+
+    ;; pause or play the current song
+    (define/public (play-toggle)
+      (define selections (get-selections))
+      (unless (null? selections)
+        (send player toggle-pause-play)))
 
     (inherit get-width get-column-width set-column-width)
     ;; used to initialize the column widths
